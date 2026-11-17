@@ -12,7 +12,10 @@ const leaderboardRoutes = require('./routes/leaderboard');
 const achievementsRoutes = require('./routes/achievements');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
 
 // Security headers
 app.use(helmet());
