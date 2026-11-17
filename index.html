@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Lumina Slide - Facebook Instant Game</title>
+  <script src="https://connect.facebook.net/en_US/fbinstant.7.1.js"></script>
+  <style>
+    :root {
+      --bg-1: #0b132b;
+      --bg-2: #1c2541;
+      --accent: #5bc0be;
+      --text-main: #f0f4f8;
+      --text-muted: #9fb3c8;
+      --card-bg: rgba(255, 255, 255, 0.06);
+      --card-border: rgba(255, 255, 255, 0.12);
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    body {
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(circle at top, var(--bg-2), var(--bg-1));
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px 20px;
+      overflow: hidden;
+    }
+    .top-bar {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .player-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 6px 12px 6px 6px;
+      border-radius: 999px;
+      backdrop-filter: blur(8px);
+    }
+    .player-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #5bc0be, #3a506b);
+      object-fit: cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .player-name {
+      font-size: 13px;
+      font-weight: 600;
+      max-width: 120px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .audio-controls {
+      display: flex;
+      gap: 8px;
+    }
+    .icon-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      transition: transform 0.15s ease, background 0.2s ease;
+    }
+    .icon-btn:active {
+      transform: scale(0.92);
+    }
+    .icon-btn.active {
+      background: rgba(91, 192, 190, 0.22);
+      border-color: var(--accent);
+      color: #8ef6f3;
+    }
+    .header-info {
+      text-align: center;
+      margin: 4px 0;
+    }
+    .level-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(91, 192, 190, 0.16);
+      border: 1px solid rgba(91, 192, 190, 0.4);
+      color: #9ff7f5;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      margin-bottom: 8px;
+    }
+    .stats-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      max-width: 440px;
+    }
+    .stat-card {
+      flex: 1;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 8px 10px;
+      text-align: center;
+    }
+    .stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+    }
+    .stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+    .theme-bar {
+      display: flex;
+      gap: 8px;
+      margin: 4px 0;
+    }
+    .theme-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .theme-btn.active {
+      background: var(--accent);
+      color: #0b132b;
+      border-color: var(--accent);
+    }
+    .board-wrapper {
+      position: relative;
+      width: min(88vw, 390px);
+      height: min(88vw, 390px);
+      background: rgba(11, 19, 43, 0.75);
+      border: 2px solid rgba(91, 192, 190, 0.28);
+      border-radius: 20px;
+      padding: 10px;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45), inset 0 0 24px rgba(91, 192, 190, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .grid {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: grid;
+      gap: 8px;
+    }
+    .tile {
+      position: relative;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #ffffff;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.2s ease, filter 0.2s ease;
+      box-shadow: 0 5px 14px rgba(0, 0, 0, 0.32), inset 0 1px 1px rgba(255, 255, 255, 0.28);
+      overflow: hidden;
+    }
+    .tile:active {
+      transform: scale(0.95);
+    }
+    .tile.empty {
+      background: rgba(255, 255, 255, 0.025);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.35);
+      cursor: default;
+    }
+    .tile.correct {
+      box-shadow: 0 0 0 2px rgba(142, 246, 243, 0.65), 0 6px 16px rgba(91, 192, 190, 0.25);
+    }
+    .tile.hint-glow {
+      animation: pulseHint 1s infinite alternate;
+      z-index: 3;
+    }
+    @keyframes pulseHint {
+      from {
+        box-shadow: 0 0 8px #ffd166, 0 0 16px #ffd166;
+        transform: scale(0.98);
+      }
+      to {
+        box-shadow: 0 0 18px #ffd166, 0 0 32px #ff9f1c;
+        transform: scale(1.03);
+      }
+    }
+    .tile-badge {
+      position: absolute;
+      bottom: 4px;
+      right: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(11, 19, 43, 0.65);
+      color: #fff;
+      padding: 1px 5px;
+      border-radius: 6px;
+      backdrop-filter: blur(4px);
+    }
+    .peek-overlay {
+      position: absolute;
+      inset: 10px;
+      border-radius: 14px;
+      background: #141e30;
+      z-index: 10;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+    .peek-overlay.visible {
+      display: flex;
+    }
+    .controls-row {
+      width: 100%;
+      max-width: 440px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .action-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 11px 8px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.2s ease, transform 0.12s ease;
+    }
+    .action-btn:active {
+      transform: scale(0.96);
+    }
+    .action-btn.primary {
+      background: linear-gradient(135deg, #5bc0be, #3a86ff);
+      color: #071022;
+      border: none;
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 11, 25, 0.82);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: 20px;
+    }
+    .modal-backdrop.open {
+      display: flex;
+    }
+    .modal-card {
+      background: linear-gradient(160deg, #1c2541, #0b132b);
+      border: 1px solid rgba(91, 192, 190, 0.45);
+      border-radius: 24px;
+      padding: 26px 22px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes popIn {
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #8ef6f3;
+      margin-bottom: 6px;
+    }
+    .modal-sub {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+      line-height: 1.45;
+    }
+    .modal-stats {
+      display: flex;
+      justify-content: space-around;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 20px;
+    }
+    .modal-btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .modal-btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+    }
+    .modal-btn.next {
+      background: linear-gradient(135deg, #5bc0be, #48cae4);
+      color: #081226;
+    }
+    .modal-btn.share {
+      background: #1877f2;
+      color: #ffffff;
+    }
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 60;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="top-bar">
+    <div class="player-badge">
+      <img id="player-photo" class="player-avatar" alt="" style="display:none;" />
+      <div id="player-initial" class="player-avatar">P</div>
+      <span id="player-name" class="player-name">Player</span>
+    </div>
+
+    <div class="audio-controls">
+      <button id="music-toggle" class="icon-btn active" title="Calm Ambient Music">🎵</button>
+      <button id="sfx-toggle" class="icon-btn active" title="Sound Effects">🔊</button>
+    </div>
+  </div>
+
+  <div class="header-info">
+    <div class="level-pill" id="level-badge">LEVEL 1 • 9 TILES (3×3)</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Moves</div>
+      <div class="stat-value" id="moves-val">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Time</div>
+      <div class="stat-value" id="time-val">00:00</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Best</div>
+      <div class="stat-value" id="best-val">--</div>
+    </div>
+  </div>
+
+  <div class="theme-bar">
+    <button class="theme-btn active" data-theme="zen">Zen Numbers</button>
+    <button class="theme-btn" data-theme="aurora">Aurora Art</button>
+    <button class="theme-btn" data-theme="lotus">Lotus Art</button>
+  </div>
+
+  <div class="board-wrapper" id="board-wrapper">
+    <div class="grid" id="puzzle-grid"></div>
+    <div class="peek-overlay" id="peek-overlay"></div>
+  </div>
+
+  <div class="controls-row">
+    <button class="action-btn" id="hint-btn">💡 Hint</button>
+    <button class="action-btn" id="peek-btn">👁️ Peek</button>
+    <button class="action-btn primary" id="shuffle-btn">🔄 Shuffle</button>
+  </div>
+
+  <div class="modal-backdrop" id="win-modal">
+    <div class="modal-card">
+      <div class="modal-title" id="win-title">Level 1 Complete!</div>
+      <div class="modal-sub" id="win-subtitle">
+        Get ready for Level 2 with <strong>16 Tiles (4×4)</strong>!
+      </div>
+      <div class="modal-stats">
+        <div>
+          <div class="stat-label">Moves</div>
+          <div class="stat-value" id="win-moves">0</div>
+        </div>
+        <div>
+          <div class="stat-label">Time</div>
+          <div class="stat-value" id="win-time">00:00</div>
+        </div>
+      </div>
+      <div class="modal-btn-group">
+        <button class="modal-btn next" id="next-level-btn">Next Level (16 Tiles) →</button>
+        <button class="modal-btn share" id="share-btn">Challenge Friends on Facebook</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      level: 1,
+      gridSize: 3,
+      board: [],
+      moves: 0,
+      seconds: 0,
+      timerId: null,
+      isPlaying: false,
+      theme: 'zen',
+      musicEnabled: true,
+      sfxEnabled: true,
+      bestScores: {},
+      fbInitialized: false
+    };
+
+    function getGridSizeForLevel(level) {
+      return Math.min(level + 2, 7);
+    }
+
+    class RelaxingAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.isMusicPlaying = false;
+        this.chordTimer = null;
+        this.masterGain = null;
+        this.chordIndex = 0;
+        this.chords = [
+          [174.61, 220.00, 261.63, 329.63],
+          [130.81, 196.00, 246.94, 329.63],
+          [110.00, 164.81, 196.00, 261.63],
+          [196.00, 246.94, 293.66, 329.63]
+        ];
+      }
+
+      initContext() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioCtx();
+          this.masterGain = this.ctx.createGain();
+          this.masterGain.gain.value = 0.22;
+          this.masterGain.connect(this.ctx.destination);
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      startMusic() {
+        if (!state.musicEnabled) return;
+        this.initContext();
+        if (this.isMusicPlaying) return;
+        this.isMusicPlaying = true;
+
+        const playAmbientPad = () => {
+          if (!this.isMusicPlaying || !state.musicEnabled) return;
+          const now = this.ctx.currentTime;
+          const freqs = this.chords[this.chordIndex % this.chords.length];
+          this.chordIndex++;
+
+          freqs.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const filter = this.ctx.createBiquadFilter();
+            const env = this.ctx.createGain();
+
+            osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
+            osc.frequency.setValueAtTime(freq, now);
+
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(650, now);
+
+            env.gain.setValueAtTime(0.0001, now);
+            env.gain.linearRampToValueAtTime(0.14 / freqs.length, now + 2.2);
+            env.gain.exponentialRampToValueAtTime(0.0001, now + 6.4);
+
+            osc.connect(filter);
+            filter.connect(env);
+            env.connect(this.masterGain);
+
+            osc.start(now);
+            osc.stop(now + 6.5);
+          });
+
+          const chimeNote = freqs[Math.floor(Math.random() * freqs.length)] * 2;
+          const chimeOsc = this.ctx.createOscillator();
+          const chimeGain = this.ctx.createGain();
+          chimeOsc.type = 'sine';
+          chimeOsc.frequency.setValueAtTime(chimeNote, now + 1.5);
+          chimeGain.gain.setValueAtTime(0.0001, now + 1.5);
+          chimeGain.gain.linearRampToValueAtTime(0.05, now + 1.65);
+          chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 4.2);
+
+          chimeOsc.connect(chimeGain);
+          chimeGain.connect(this.masterGain);
+          chimeOsc.start(now + 1.5);
+          chimeOsc.stop(now + 4.3);
+        };
+
+        playAmbientPad();
+        this.chordTimer = setInterval(playAmbientPad, 5500);
+      }
+
+      stopMusic() {
+        this.isMusicPlaying = false;
+        if (this.chordTimer) {
+          clearInterval(this.chordTimer);
+          this.chordTimer = null;
+        }
+      }
+
+      playSlideSound() {
+        if (!state.sfxEnabled) return;
+        this.initContext();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(340, now);
+        osc.frequency.exponentialRampToValueAtTime(520, now + 0.08);
+
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.1);
+      }
+
+      playWinChime() {
+        if (!state.sfxEnabled) return;
+        this.initContext();
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, i) => {
+          const now = this.ctx.currentTime + i * 0.12;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(0.14, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.68);
+        });
+      }
+    }
+
+    const audio = new RelaxingAudioEngine();
+
+    document.addEventListener('pointerdown', () => {
+      if (state.musicEnabled && !audio.isMusicPlaying) {
+        audio.startMusic();
+      }
+    }, { once: true });
+
+    async function initFacebookInstantGame() {
+      if (typeof FBInstant === 'undefined') {
+        loadLocalProgress();
+        startLevel(state.level);
+        return;
+      }
+
+      try {
+        await FBInstant.initializeAsync();
+        state.fbInitialized = true;
+        FBInstant.setLoadingProgress(50);
+
+        const savedData = await FBInstant.player.getDataAsync(['level', 'bestScores']);
+        if (savedData && savedData.level) state.level = savedData.level;
+        if (savedData && savedData.bestScores) state.bestScores = savedData.bestScores;
+
+        FBInstant.setLoadingProgress(100);
+        await FBInstant.startGameAsync();
+
+        const playerName = FBInstant.player.getName();
+        const playerPhoto = FBInstant.player.getPhoto();
+        if (playerName) {
+          document.getElementById('player-name').textContent = playerName;
+          document.getElementById('player-initial').textContent = playerName.charAt(0).toUpperCase();
+        }
+        if (playerPhoto) {
+          const img = document.getElementById('player-photo');
+          img.src = playerPhoto;
+          img.style.display = 'block';
+          document.getElementById('player-initial').style.display = 'none';
+        }
+
+        FBInstant.onPause(() => {
+          audio.stopMusic();
+        });
+
+        startLevel(state.level);
+      } catch (err) {
+        loadLocalProgress();
+        startLevel(state.level);
+      }
+    }
+
+    function loadLocalProgress() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('lumina_fb_save') || '{}');
+        if (saved.level) state.level = saved.level;
+        if (saved.bestScores) state.bestScores = saved.bestScores;
+      } catch (_) {}
+    }
+
+    async function saveProgress() {
+      const payload = { level: state.level, bestScores: state.bestScores };
+      try {
+        localStorage.setItem('lumina_fb_save', JSON.stringify(payload));
+      } catch (_) {}
+
+      if (state.fbInitialized && typeof FBInstant !== 'undefined') {
+        try {
+          await FBInstant.player.setDataAsync(payload);
+        } catch (_) {}
+      }
+    }
+
+    function startLevel(levelNum) {
+      state.level = levelNum;
+      state.gridSize = getGridSizeForLevel(levelNum);
+      const totalTiles = state.gridSize * state.gridSize;
+
+      document.getElementById('level-badge').textContent =
+        `LEVEL ${state.level} • ${totalTiles} TILES (${state.gridSize}×${state.gridSize})`;
+
+      updateBestDisplay();
+      resetStats();
+      generateSolvedBoard();
+      shuffleBoardSolvable();
+      renderBoard();
+      renderPeekPreview();
+    }
+
+    function resetStats() {
+      clearInterval(state.timerId);
+      state.moves = 0;
+      state.seconds = 0;
+      state.isPlaying = false;
+      document.getElementById('moves-val').textContent = '0';
+      document.getElementById('time-val').textContent = '00:00';
+    }
+
+    function startTimer() {
+      if (state.isPlaying) return;
+      state.isPlaying = true;
+      state.timerId = setInterval(() => {
+        state.seconds++;
+        document.getElementById('time-val').textContent = formatTime(state.seconds);
+      }, 1000);
+    }
+
+    function formatTime(sec) {
+      const m = String(Math.floor(sec / 60)).padStart(2, '0');
+      const s = String(sec % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function generateSolvedBoard() {
+      const total = state.gridSize * state.gridSize;
+      state.board = [];
+      for (let i = 1; i < total; i++) state.board.push(i);
+      state.board.push(0);
+    }
+
+    function shuffleBoardSolvable() {
+      const size = state.gridSize;
+      const shuffleSteps = size * size * 18;
+      let emptyIdx = state.board.indexOf(0);
+      let prevIdx = -1;
+
+      for (let step = 0; step < shuffleSteps; step++) {
+        const neighbors = getAdjacentIndices(emptyIdx, size).filter(idx => idx !== prevIdx);
+        const nextIdx = neighbors[Math.floor(Math.random() * neighbors.length)];
+        [state.board[emptyIdx], state.board[nextIdx]] = [state.board[nextIdx], state.board[emptyIdx]];
+        prevIdx = emptyIdx;
+        emptyIdx = nextIdx;
+      }
+
+      if (isBoardSolved()) shuffleBoardSolvable();
+    }
+
+    function getAdjacentIndices(idx, size) {
+      const row = Math.floor(idx / size);
+      const col = idx % size;
+      const adj = [];
+      if (row > 0) adj.push(idx - size);
+      if (row < size - 1) adj.push(idx + size);
+      if (col > 0) adj.push(idx - 1);
+      if (col < size - 1) adj.push(idx + 1);
+      return adj;
+    }
+
+    function handleTileClick(clickedIdx) {
+      const size = state.gridSize;
+      const emptyIdx = state.board.indexOf(0);
+      if (clickedIdx === emptyIdx) return;
+
+      const clickRow = Math.floor(clickedIdx / size);
+      const clickCol = clickedIdx % size;
+      const emptyRow = Math.floor(emptyIdx / size);
+      const emptyCol = emptyIdx % size;
+
+      if (clickRow === emptyRow) {
+        startTimer();
+        const step = clickCol < emptyCol ? -1 : 1;
+        for (let c = emptyCol; c !== clickCol; c += step) {
+          const curr = emptyRow * size + c;
+          const next = emptyRow * size + (c + step);
+          state.board[curr] = state.board[next];
+        }
+        state.board[clickedIdx] = 0;
+        afterMove();
+      } else if (clickCol === emptyCol) {
+        startTimer();
+        const step = clickRow < emptyRow ? -1 : 1;
+        for (let r = emptyRow; r !== clickRow; r += step) {
+          const curr = r * size + emptyCol;
+          const next = (r + step) * size + emptyCol;
+          state.board[curr] = state.board[next];
+        }
+        state.board[clickedIdx] = 0;
+        afterMove();
+      }
+    }
+
+    function afterMove() {
+      state.moves++;
+      document.getElementById('moves-val').textContent = state.moves;
+      audio.playSlideSound();
+      renderBoard();
+      if (isBoardSolved()) handleLevelComplete();
+    }
+
+    function isBoardSolved() {
+      const total = state.gridSize * state.gridSize;
+      for (let i = 0; i < total - 1; i++) {
+        if (state.board[i] !== i + 1) return false;
+      }
+      return state.board[total - 1] === 0;
+    }
+
+    function getArtSvgDataUri(theme) {
+      if (theme === 'aurora') {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+          <defs>
+            <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#09152b"/>
+              <stop offset="65%" stop-color="#1b3b6f"/>
+              <stop offset="100%" stop-color="#2ec4b6"/>
+            </linearGradient>
+            <linearGradient id="wave" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#80ffdb" stop-opacity="0.85"/>
+              <stop offset="50%" stop-color="#48bfe3" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#7400b8" stop-opacity="0.7"/>
+            </linearGradient>
+          </defs>
+          <rect width="400" height="400" fill="url(#sky)"/>
+          <circle cx="310" cy="85" r="34" fill="#fff3b0" opacity="0.9"/>
+          <path d="M0 190 Q110 90 210 175 T400 130 L400 260 Q280 210 180 265 T0 235 Z" fill="url(#wave)"/>
+          <polygon points="0,400 95,220 195,400" fill="#0d1b2a"/>
+          <polygon points="130,400 255,195 385,400" fill="#1b263b"/>
+          <polygon points="240,400 340,245 400,400" fill="#09152b"/>
+        </svg>`;
+        return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+      } else {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+          <defs>
+            <radialGradient id="bg" cx="50%" cy="45%" r="65%">
+              <stop offset="0%" stop-color="#3a0ca3"/>
+              <stop offset="55%" stop-color="#240046"/>
+              <stop offset="100%" stop-color="#10002b"/>
+            </radialGradient>
+            <linearGradient id="petal" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#ff9ebb"/>
+              <stop offset="100%" stop-color="#f72585"/>
+            </linearGradient>
+          </defs>
+          <rect width="400" height="400" fill="url(#bg)"/>
+          <circle cx="200" cy="200" r="145" fill="none" stroke="#ffd166" stroke-width="2" opacity="0.35"/>
+          <g transform="translate(200,215)">
+            <ellipse cx="0" cy="-70" rx="28" ry="85" fill="url(#petal)"/>
+            <ellipse cx="0" cy="-70" rx="28" ry="85" fill="url(#petal)" transform="rotate(35)"/>
+            <ellipse cx="0" cy="-70" rx="28" ry="85" fill="url(#petal)" transform="rotate(-35)"/>
+            <ellipse cx="0" cy="-65" rx="26" ry="80" fill="#ff758f" transform="rotate(68)"/>
+            <ellipse cx="0" cy="-65" rx="26" ry="80" fill="#ff758f" transform="rotate(-68)"/>
+            <circle cx="0" cy="-15" r="24" fill="#ffd166"/>
+          </g>
+        </svg>`;
+        return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+      }
+    }
+
+    function renderBoard(hintTileValue = null) {
+      const grid = document.getElementById('puzzle-grid');
+      const size = state.gridSize;
+      grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+      grid.style.gridTemplateRows = `repeat(${size}, 1fr)`;
+      grid.innerHTML = '';
+
+      const fontSize = size <= 3 ? '28px' : size === 4 ? '22px' : size === 5 ? '18px' : '15px';
+      const artUri = state.theme !== 'zen' ? getArtSvgDataUri(state.theme) : null;
+
+      state.board.forEach((val, idx) => {
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+
+        if (val === 0) {
+          tile.classList.add('empty');
+        } else {
+          if (val === idx + 1) tile.classList.add('correct');
+          if (val === hintTileValue) tile.classList.add('hint-glow');
+
+          if (state.theme === 'zen') {
+            const hue = 175 + ((val * 11) % 65);
+            tile.style.background = `linear-gradient(145deg, hsl(${hue}, 62%, 44%), hsl(${hue + 18}, 68%, 28%))`;
+            tile.style.fontSize = fontSize;
+            tile.textContent = val;
+          } else {
+            const correctRow = Math.floor((val - 1) / size);
+            const correctCol = (val - 1) % size;
+            tile.style.backgroundImage = artUri;
+            tile.style.backgroundSize = `${size * 100}% ${size * 100}%`;
+            const posX = size > 1 ? (correctCol / (size - 1)) * 100 : 0;
+            const posY = size > 1 ? (correctRow / (size - 1)) * 100 : 0;
+            tile.style.backgroundPosition = `${posX}% ${posY}%`;
+
+            const badge = document.createElement('span');
+            badge.className = 'tile-badge';
+            badge.textContent = val;
+            tile.appendChild(badge);
+          }
+
+          tile.addEventListener('click', () => handleTileClick(idx));
+        }
+
+        grid.appendChild(tile);
+      });
+    }
+
+    function renderPeekPreview() {
+      const overlay = document.getElementById('peek-overlay');
+      if (state.theme === 'zen') {
+        overlay.style.backgroundImage = 'none';
+        overlay.innerHTML = `<div style="text-align:center;padding:20px;">
+          <div style="font-size:20px;font-weight:800;color:#8ef6f3;margin-bottom:8px;">Goal Order</div>
+          <div style="font-size:14px;color:#9fb3c8;">Arrange numbers <strong>1</strong> to <strong>${state.gridSize * state.gridSize - 1}</strong> from top-left to bottom-right.</div>
+        </div>`;
+      } else {
+        overlay.innerHTML = '';
+        overlay.style.backgroundImage = getArtSvgDataUri(state.theme);
+        overlay.style.backgroundSize = 'cover';
+        overlay.style.backgroundPosition = 'center';
+      }
+    }
+
+    let lastHintVal = null;
+    function showSmartHint() {
+      const size = state.gridSize;
+      const emptyIdx = state.board.indexOf(0);
+      const neighbors = getAdjacentIndices(emptyIdx, size);
+
+      let bestTileVal = null;
+      let bestScore = Infinity;
+
+      neighbors.forEach(nIdx => {
+        const tileVal = state.board[nIdx];
+        const simBoard = [...state.board];
+        simBoard[emptyIdx] = tileVal;
+        simBoard[nIdx] = 0;
+
+        let manhattan = 0;
+        for (let i = 0; i < simBoard.length; i++) {
+          const v = simBoard[i];
+          if (v === 0) continue;
+          const targetIdx = v - 1;
+          const r1 = Math.floor(i / size), c1 = i % size;
+          const r2 = Math.floor(targetIdx / size), c2 = targetIdx % size;
+          manhattan += Math.abs(r1 - r2) + Math.abs(c1 - c2);
+        }
+
+        const penalty = tileVal === lastHintVal ? 1.5 : 0;
+        if (manhattan + penalty < bestScore) {
+          bestScore = manhattan + penalty;
+          bestTileVal = tileVal;
+        }
+      });
+
+      lastHintVal = bestTileVal;
+      renderBoard(bestTileVal);
+    }
+
+    function handleLevelComplete() {
+      clearInterval(state.timerId);
+      state.isPlaying = false;
+      audio.playWinChime();
+      launchConfetti();
+
+      const levelKey = `L${state.level}`;
+      if (!state.bestScores[levelKey] || state.moves < state.bestScores[levelKey]) {
+        state.bestScores[levelKey] = state.moves;
+      }
+      updateBestDisplay();
+
+      const nextLevel = state.level + 1;
+      const nextSize = getGridSizeForLevel(nextLevel);
+      const nextTiles = nextSize * nextSize;
+
+      document.getElementById('win-title').textContent = `Level ${state.level} Complete!`;
+      document.getElementById('win-subtitle').innerHTML =
+        `Amazing focus! Next up: <strong>Level ${nextLevel} (${nextTiles} Tiles • ${nextSize}×${nextSize})</strong>`;
+      document.getElementById('win-moves').textContent = state.moves;
+      document.getElementById('win-time').textContent = formatTime(state.seconds);
+      document.getElementById('next-level-btn').textContent =
+        `Play Level ${nextLevel} (${nextTiles} Tiles) →`;
+
+      state.level = nextLevel;
+      saveProgress();
+
+      if (state.fbInitialized && typeof FBInstant !== 'undefined') {
+        FBInstant.getLeaderboardAsync('Global_Levels')
+          .then(lb => lb.setScoreAsync(nextLevel - 1))
+          .catch(() => {});
+      }
+
+      setTimeout(() => {
+        document.getElementById('win-modal').classList.add('open');
+      }, 350);
+    }
+
+    function updateBestDisplay() {
+      const levelKey = `L${state.level}`;
+      const best = state.bestScores[levelKey];
+      document.getElementById('best-val').textContent = best ? `${best}m` : '--';
+    }
+
+    function launchConfetti() {
+      const canvas = document.getElementById('confetti-canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const particles = Array.from({ length: 70 }, () => ({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * 100,
+        r: 4 + Math.random() * 5,
+        c: ['#5bc0be', '#8ef6f3', '#ffd166', '#ff758f', '#48cae4'][Math.floor(Math.random() * 5)],
+        vx: -2 + Math.random() * 4,
+        vy: 2.5 + Math.random() * 4
+      }));
+
+      let frames = 0;
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          ctx.fillStyle = p.c;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        frames++;
+        if (frames < 120) requestAnimationFrame(draw);
+        else ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      draw();
+    }
+
+    document.getElementById('music-toggle').addEventListener('click', (e) => {
+      state.musicEnabled = !state.musicEnabled;
+      e.currentTarget.classList.toggle('active', state.musicEnabled);
+      e.currentTarget.textContent = state.musicEnabled ? '🎵' : '🔇';
+      if (state.musicEnabled) audio.startMusic();
+      else audio.stopMusic();
+    });
+
+    document.getElementById('sfx-toggle').addEventListener('click', (e) => {
+      state.sfxEnabled = !state.sfxEnabled;
+      e.currentTarget.classList.toggle('active', state.sfxEnabled);
+      e.currentTarget.textContent = state.sfxEnabled ? '🔊' : '🔈';
+    });
+
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.theme = btn.dataset.theme;
+        renderBoard();
+        renderPeekPreview();
+      });
+    });
+
+    document.getElementById('hint-btn').addEventListener('click', showSmartHint);
+
+    const peekBtn = document.getElementById('peek-btn');
+    const peekOverlay = document.getElementById('peek-overlay');
+    peekBtn.addEventListener('pointerdown', () => peekOverlay.classList.add('visible'));
+    peekBtn.addEventListener('pointerup', () => peekOverlay.classList.remove('visible'));
+    peekBtn.addEventListener('pointerleave', () => peekOverlay.classList.remove('visible'));
+
+    document.getElementById('shuffle-btn').addEventListener('click', () => {
+      resetStats();
+      shuffleBoardSolvable();
+      renderBoard();
+    });
+
+    document.getElementById('next-level-btn').addEventListener('click', () => {
+      document.getElementById('win-modal').classList.remove('open');
+      startLevel(state.level);
+    });
+
+    document.getElementById('share-btn').addEventListener('click', async () => {
+      const completedLvl = state.level - 1;
+      const completedTiles = Math.pow(getGridSizeForLevel(completedLvl), 2);
+      if (state.fbInitialized && typeof FBInstant !== 'undefined') {
+        try {
+          await FBInstant.shareAsync({
+            intent: 'CHALLENGE',
+            image: getBase64ShareBanner(completedLvl, completedTiles),
+            text: `I just solved Level ${completedLvl} (${completedTiles} tiles) in Lumina Slide! Can you beat my score?`,
+            data: { level: completedLvl }
+          });
+        } catch (_) {}
+      } else {
+        alert(`Ready for Facebook Instant Games! Share message: "I solved Level ${completedLvl} (${completedTiles} tiles)!"`);
+      }
+    });
+
+    function getBase64ShareBanner(lvl, tiles) {
+      const c = document.createElement('canvas');
+      c.width = 600;
+      c.height = 315;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#0b132b';
+      ctx.fillRect(0, 0, 600, 315);
+      ctx.fillStyle = '#5bc0be';
+      ctx.font = 'bold 36px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('LUMINA SLIDE', 300, 120);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '24px sans-serif';
+      ctx.fillText(`Level ${lvl} Complete • ${tiles} Tiles!`, 300, 175);
+      return c.toDataURL('image/png');
+    }
+
+    let touchStartX = 0, touchStartY = 0;
+    const boardWrapper = document.getElementById('board-wrapper');
+    boardWrapper.addEventListener('touchstart', e => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    boardWrapper.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+
+      const size = state.gridSize;
+      const emptyIdx = state.board.indexOf(0);
+      const emptyRow = Math.floor(emptyIdx / size);
+      const emptyCol = emptyIdx % size;
+      let targetIdx = -1;
+
+      if (Math.abs(dx) > Math.abs(dy)) {
+        if (dx > 0 && emptyCol > 0) targetIdx = emptyIdx - 1;
+        else if (dx < 0 && emptyCol < size - 1) targetIdx = emptyIdx + 1;
+      } else {
+        if (dy > 0 && emptyRow > 0) targetIdx = emptyIdx - size;
+        else if (dy < 0 && emptyRow < size - 1) targetIdx = emptyIdx + size;
+      }
+      if (targetIdx !== -1) handleTileClick(targetIdx);
+    }, { passive: true });
+
+    initFacebookInstantGame();
+  </script>
+</body>
+</html>

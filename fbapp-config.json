@@ -1,0 +1,11 @@
+{
+  "instant_games": {
+    "platform_version": "RICH_GAMEPLAY",
+    "custom_update_templates": {
+      "level_up": {
+        "example": "I just reached Level 3 (25 tiles) in Lumina Slide!"
+      }
+    },
+    "navigation_menu_version": "NAV_FLOATING"
+  }
+}

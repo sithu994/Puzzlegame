@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Lumina Slide - Full Stack Puzzle Game</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    /* Responsive layout enhancements */
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 10px 16px 30px;
+    }
+    .main-content {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 30px;
+      width: 100%;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    .game-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .sidebar-section {
+      width: 320px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      backdrop-filter: blur(12px);
+    }
+    .side-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 8px;
+    }
+    .side-tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 999px;
+      transition: all 0.2s ease;
+    }
+    .side-tab-btn.active {
+      background: var(--accent);
+      color: #0b132b;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+      text-align: left;
+    }
+    .form-group label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .form-group input {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+    .form-group input:focus {
+      border-color: var(--accent);
+    }
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent), #3a86ff);
+      color: #0b132b;
+      font-weight: 700;
+      padding: 12px;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .auth-tab-btn {
+      flex: 1;
+      padding: 8px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+    .auth-tab-btn.active {
+      background: rgba(91, 192, 190, 0.2);
+      color: var(--accent);
+    }
+    .close-btn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .size-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .size-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border-color: rgba(91, 192, 190, 0.4);
+    }
+    .size-btn.active {
+      background: linear-gradient(135deg, rgba(91, 192, 190, 0.35), rgba(58, 134, 255, 0.3));
+      border-color: var(--accent);
+      color: #8ef6f3;
+      box-shadow: 0 0 12px rgba(91, 192, 190, 0.35);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="app-container">
+    <!-- Top Navigation Bar -->
+    <header class="top-bar" style="max-width: 100%; width: 100%;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px; color: var(--accent);">✦ LUMINA SLIDE</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <!-- Auth state buttons -->
+        <div id="auth-actions" style="display: flex; gap: 8px;">
+          <button id="login-btn" class="theme-btn" style="background: rgba(91,192,190,0.15); border-color: var(--accent); color: #fff;">Sign In / Sign Up</button>
+        </div>
+
+        <div id="user-badge" class="player-badge" style="display: none;">
+          <div id="player-initial" class="player-avatar">U</div>
+          <span id="player-name" class="player-name">User</span>
+          <button id="logout-btn" style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;margin-left:4px;">(Logout)</button>
+        </div>
+
+        <!-- Audio controls -->
+        <div class="audio-controls">
+          <button id="music-toggle" class="icon-btn active" title="Calm Ambient Music">🎵</button>
+          <button id="sfx-toggle" class="icon-btn active" title="Sound Effects">🔊</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Game & Sidebar -->
+    <main class="main-content">
+      <!-- Puzzle Board Section -->
+      <section class="game-section">
+        <div class="header-info">
+          <div class="level-pill" id="level-badge">LEVEL 1 • 9 TILES (3×3)</div>
+        </div>
+
+        <!-- Grid Size / Tile Selector (9, 16, 25, 36, 49 tiles) -->
+        <div style="display:flex; flex-direction:column; align-items:center; gap:6px; margin-bottom:6px;">
+          <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); font-weight:700;">Select Puzzle Size</div>
+          <div class="tile-size-bar" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;">
+            <button class="size-btn active" data-size="3" data-level="1">9 Tiles (3×3)</button>
+            <button class="size-btn" data-size="4" data-level="2">16 Tiles (4×4)</button>
+            <button class="size-btn" data-size="5" data-level="3">25 Tiles (5×5)</button>
+            <button class="size-btn" data-size="6" data-level="4">36 Tiles (6×6)</button>
+            <button class="size-btn" data-size="7" data-level="5">49 Tiles (7×7)</button>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">Moves</div>
+            <div class="stat-value" id="moves-val">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Time</div>
+            <div class="stat-value" id="time-val">00:00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Best</div>
+            <div class="stat-value" id="best-val">--</div>
+          </div>
+        </div>
+
+        <div class="theme-bar">
+          <button class="theme-btn active" data-theme="zen">Zen Numbers</button>
+          <button class="theme-btn" data-theme="aurora">Aurora Art</button>
+          <button class="theme-btn" data-theme="lotus">Lotus Art</button>
+        </div>
+
+        <div class="board-wrapper" id="board-wrapper">
+          <div class="grid" id="puzzle-grid"></div>
+          <div class="peek-overlay" id="peek-overlay"></div>
+        </div>
+
+        <div class="controls-row" style="grid-template-columns: repeat(5, 1fr); max-width: 480px; gap: 6px;">
+          <button class="action-btn" id="undo-btn" title="Take a step back">↩️ Undo</button>
+          <button class="action-btn" id="hint-btn" title="Show optimal next move">💡 Hint</button>
+          <button class="action-btn" id="peek-btn" title="Hold to see original pattern">👁️ Peek</button>
+          <button class="action-btn" id="auto-solve-btn" style="background: rgba(255, 183, 3, 0.18); border-color: #ffb703; color: #ffd166;" title="Auto solve the puzzle">⚡ Auto Solve</button>
+          <button class="action-btn primary" id="shuffle-btn" title="Shuffle tiles">🔄 Shuffle</button>
+        </div>
+      </section>
+
+      <!-- Sidebar Section -->
+      <aside class="sidebar-section">
+        <div class="side-tabs">
+          <button class="side-tab-btn active" data-target="tab-leaderboard">🏆 High Scores</button>
+          <button class="side-tab-btn" data-target="tab-achievements">⭐ Achievements</button>
+        </div>
+
+        <div id="tab-leaderboard" class="tab-content">
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--accent);">Leaderboard (Current Level)</div>
+          <div id="leaderboard-list">
+            <div style="color:var(--text-muted);font-size:12px;padding:8px;">Loading scores...</div>
+          </div>
+        </div>
+
+        <div id="tab-achievements" class="tab-content" style="display: none;">
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--accent);">Badges & Milestones</div>
+          <div id="achievements-list">
+            <div style="color:var(--text-muted);font-size:12px;padding:8px;">Loading badges...</div>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Win Modal -->
+  <div class="modal-backdrop" id="win-modal">
+    <div class="modal-card">
+      <div class="modal-title" id="win-title">Level Solved!</div>
+      <div class="modal-sub" id="win-subtitle">Great job solving the puzzle.</div>
+      <div class="modal-stats">
+        <div>
+          <div class="stat-label">Moves</div>
+          <div class="stat-value" id="win-moves">0</div>
+        </div>
+        <div>
+          <div class="stat-label">Time</div>
+          <div class="stat-value" id="win-time">00:00</div>
+        </div>
+        <div>
+          <div class="stat-label">Score</div>
+          <div class="stat-value" id="win-score">0 pts</div>
+        </div>
+      </div>
+      <div class="modal-btn-group">
+        <button class="modal-btn next" id="next-level-btn">Next Level →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div class="modal-backdrop" id="auth-modal">
+    <div class="modal-card" style="position: relative;">
+      <button class="close-btn" id="close-auth-btn">&times;</button>
+      <div style="display:flex;gap:6px;background:rgba(255,255,255,0.05);padding:4px;border-radius:10px;margin-bottom:16px;">
+        <button class="auth-tab-btn active" data-mode="login">Sign In</button>
+        <button class="auth-tab-btn" data-mode="register">Register</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form">
+        <div class="form-group">
+          <label>Email or Username</label>
+          <input type="text" id="login-email" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="login-password" required />
+        </div>
+        <div id="login-error" style="color:var(--danger);font-size:12px;margin-bottom:8px;"></div>
+        <button type="submit" class="btn-submit">Sign In</button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="register-form" style="display: none;">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="reg-username" required />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="reg-email" required />
+        </div>
+        <div class="form-group">
+          <label>Password (min 6 chars)</label>
+          <input type="password" id="reg-password" minlength="6" required />
+        </div>
+        <div id="register-error" style="color:var(--danger);font-size:12px;margin-bottom:8px;"></div>
+        <button type="submit" class="btn-submit">Create Account</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/game.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
